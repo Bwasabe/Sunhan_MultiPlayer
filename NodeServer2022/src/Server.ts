@@ -1,8 +1,11 @@
 import http from 'http'; // 이렇게 쓰면 ts가 알아서 require로 변경해준다.
 // const http = require('http');
-import Express from 'express';
+import Express, {Application, Request, Response} from 'express';
 // const Express = require('express');
+import path from 'path';
+import fs from 'fs';
 
+// 깃에는 노드 모듈이 필요가 없기 때문에 깃 이그노어에 노드 모듈이 들어감, 나중에 받은 후 npm i 하나만 치면 알아서 패키지가 설치됨
 
 // JavaScript Object Notation(JSON)
 const data = {
@@ -16,12 +19,34 @@ const data = {
 
 const app: Express.Application = Express();
 
-app.get("/", (req, res) => {
+app.get("/", (req : Request, res : Response) => {
     res.json(data);
 });
 
-app.get("/image", (req, res) => {
-    // 아직 미구현
+app.get("/image/:filename", (req: Request, res: Response) => {
+    let filename: string = req.params.filename;
+    let filePath = path.join(__dirname, "..", "images", filename);
+    if (!fs.existsSync(filePath))
+    {
+        filePath = path.join(__dirname, "..", "images", "안아줘요 태영.png");
+    }
+    res.sendFile(filePath);
+    
+});
+
+app.get("/imagelist", (req: Request, res: Response) => {
+    let imagePath = path.join(__dirname, "..", "images");
+    let fileList: string[] = fs.readdirSync(imagePath);
+    fileList = fileList.filter(x => x != "안아줘요 태영.png");
+    console.log(fileList);
+    
+    let msg = {
+        text: "성공적으로 로딩",
+        count: fileList.length,
+        list: fileList
+    }
+
+    res.json(msg);
 });
 
 const server = http.createServer(app);
