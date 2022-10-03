@@ -32,7 +32,6 @@ public class NetworkManager : MonoBehaviour
         {
             string msg = webReq.downloadHandler.text;
 
-            Debug.Log(msg);
             Msg m = JsonUtility.FromJson<Msg>(msg);
 
             for (int i = 0; i < m.users.Count; ++i)
