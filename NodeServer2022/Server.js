@@ -1,18 +1,26 @@
-let http = require('http');
+const http = require('http');
 
-let a = () => {
-    
+// JavaScript Object Notation(JSON)
+const data = {
+    name: "방과후 데이터",
+    users: [
+        { id: 1, name: "김동윤" },
+        { id: 2, name: "김대현" },
+        { id: 3, name: "유하준" },
+    ]
 };
 
 
-let server = http.createServer((req, res) => {
+const server = http.createServer((req, res) => {
 
-    console.log(req.url);
+    // console.log(JSON.stringify(data));
 
     switch (req.url)
     {
         case "/":
-            res.end("Main Page");
+            let msg = JSON.stringify(data);
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(msg);
             break;
         case "/image":
             res.end("Image Page");
@@ -33,4 +41,6 @@ server.listen(50000, () => {
 // let a = 10;
 // let b = 20;
 // let c = a + b;
+// let a = () => {
+// };
 // console.log(c); // Debug.Log()와 동일
