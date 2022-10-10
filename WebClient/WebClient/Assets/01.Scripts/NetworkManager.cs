@@ -13,12 +13,13 @@ public class NetworkManager : MonoBehaviour
     private Button _button;
 
     private Dictionary<string, Sprite> _spriteDict = new Dictionary<string, Sprite>();
-
     private bool _isLoading = false;
+
+    private const string FILE_PATH = "../";
 
     private void Start()
     {
-        StartCoroutine(GetAllImageFromServer());
+        // StartCoroutine(GetAllImageFromServer());
 
         // TODO:
         // List를 받아와서 Json으로 도착하면
@@ -70,30 +71,36 @@ public class NetworkManager : MonoBehaviour
         if (webReq.result == UnityWebRequest.Result.Success)
         {
             string msg = webReq.downloadHandler.text;
-            Debug.Log(msg);
+            // Debug.Log(msg);
 
             TextureVO vo = JsonUtility.FromJson<TextureVO>(msg);
 
-            vo.list.ForEach(x => Debug.Log(x));
+            // vo.list.ForEach(x => Debug.Log(x));
             for (int i = 0; i < vo.count; ++i)
             {
+                // 디렉토리 체크
+                // 있으면 가져오고 없으면 밑에서 생성
                 string filename = vo.list[i];
-                if (_spriteDict.ContainsKey(filename))
+                string path = Path.Combine(Application.dataPath, FILE_PATH, filename);
+                if (Directory.Exists(path))
                 {
-                    yield break;
+                    // byte[] bytes = texture.EncodeToPNG();
+                    // //TODO : 경로 설정해주기
+                    // File.WriteAllBytes("", bytes);
                 }
-                UnityWebRequest req = UnityWebRequestTexture.GetTexture($"http://localhost:50000/image/{filename}");
+                else
+                {
+                    UnityWebRequest req = UnityWebRequestTexture.GetTexture($"http://localhost:50000/image/{filename}");
 
-                yield return req.SendWebRequest();
+                    yield return req.SendWebRequest();
 
-                Texture2D texture = ((DownloadHandlerTexture)req.downloadHandler).texture as Texture2D;
+                    Texture2D texture = ((DownloadHandlerTexture)req.downloadHandler).texture as Texture2D;
 
-                byte[] bytes = texture.EncodeToPNG();
-                //TODO : 경로 설정해주기
-                File.WriteAllBytes("", bytes);
 
-                Sprite s = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
-                _spriteDict[filename] = s;
+                }
+                // Sprite s = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+
+                // _spriteDict[filename] = s;
 
                 Button b = Instantiate(_button, _button.transform.parent);
                 b.onClick.AddListener(() => _targetImage.sprite = _spriteDict[filename]);
@@ -114,10 +121,10 @@ public class NetworkManager : MonoBehaviour
 
         if (webReq.result == UnityWebRequest.Result.Success)
         {
-            Debug.Log(webReq.downloadHandler.data);
+            // Debug.Log(webReq.downloadHandler.data);
             Texture2D texture = ((DownloadHandlerTexture)webReq.downloadHandler).texture as Texture2D;
 
-            Debug.Log(texture);
+            // Debug.Log(texture);
             Sprite s = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
             _targetImage.sprite = s;
             _targetImage.preserveAspect = true;
@@ -130,7 +137,7 @@ public class NetworkManager : MonoBehaviour
     private IEnumerator GetDataFromServer()
     {
         // Post, Get, Put, Delete
-        // CRUD(Create, Request, Update, Delete)
+        // CRUD(Create, Read, Update, Delete)
         UnityWebRequest webReq = UnityWebRequest.Get("http://localhost:50000/");
 
         yield return webReq.SendWebRequest();
