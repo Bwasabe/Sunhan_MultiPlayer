@@ -19,11 +19,33 @@ export interface ScoreVO extends RowDataPacket // C#의 인터페이스와 다�
     time:Date
 }
 
-export interface InventoryVO extends RowDataPacket // C#의 인터페이스와 다르게 ts의 인터페이서는 클래스의 형태를 지정해준다
+// export interface InventoryVO extends RowDataPacket // 내가 한 것
+// {
+//     id: number,
+//     user_id: number,
+//     json: string,
+// }
+
+export interface InventoryVO extends RowDataPacket // 선생님이 한 것
 {
     id: number,
     user_id: number,
     json: string,
+}
+
+export interface InventoryVO extends RowDataPacket // 선생님이 한 것
+{
+    id: number,
+    user_id: number,
+    json: string,
+}
+
+export interface UserVO extends RowDataPacket
+{
+    id:number,
+    account: string,
+    name: string,
+    pass:string
 }
 
 // export default class GGM

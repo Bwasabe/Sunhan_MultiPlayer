@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,7 +15,17 @@ public class ItemUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
     private Vector3 _prevPos;
 
     private Image _image;
-    public ItemSO item;
+    [SerializeField]
+    private ItemSO item;
+
+    public ItemSO Item
+    {
+        get => item;
+        set{
+            item = value;
+            LoadSprite();
+        }
+    }
 
     private void Awake()
     {
@@ -25,7 +36,21 @@ public class ItemUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
     }
 
     private void Start() {
-        _image.sprite = item.sprite;
+        // _image.sprite = item.sprite;
+        LoadSprite();
+    }
+
+    private async void LoadSprite()
+    {
+        if(item.sprite == null)
+        {
+            item.sprite = await item._assetSprite.LoadAssetAsync<Sprite>().Task;
+            _image.sprite = item.sprite;
+        }
+        else
+        {
+            _image.sprite = item.sprite;
+        }
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -38,6 +63,20 @@ public class ItemUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHa
 
         _canvasGroup.alpha = 0.6f;
         _canvasGroup.blocksRaycasts = false;
+    }
+
+    public void SetData(Transform parent, Vector3 rectPos)
+    {
+        transform.SetParent(parent);
+        _rect.position = rectPos;
+        // 이전에 만약 슬롯에 있었다면 이전 슬롯에서 이 녀석이 존재했음을 제거해줘야해
+        if(_prevParent == null)return;
+        Slot slot = _prevParent.GetComponent<Slot>();
+        if(slot != null)
+        {
+            slot.RemoveItem();
+        }
+        
     }
 
     public void OnDrag(PointerEventData eventData)

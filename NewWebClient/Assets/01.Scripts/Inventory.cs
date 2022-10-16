@@ -18,55 +18,57 @@ class InventoryVO
 {
     public int count;
     public List<SlotVO> list;
+
 }
 
 [Serializable]
-class InventoryUserVO
-{
-    public int user_id;
-    public string json;
-}
-
-[Serializable]
-class InventorySendResultVO
+class ReturnMsg // struct로 하면 비용이 더 싸진다
 {
     public string msg;
-    public int user_id;
+    public string data;
 }
-
-[Serializable]
-class InventoryGetResultVO
-{
-    public string msg;
-    public string json;
-}
-
 
 public class Inventory : MonoBehaviour
 {
     [SerializeField]
     private Slot _slotPrefab;
+    [SerializeField]
+    private ItemUI _itemPrefab;
 
     [SerializeField]
-    private List<ItemSO> _codeToItem = new List<ItemSO>();
-    [SerializeField]
-    private ItemUI _itemUIPrefab;
+    private List<ItemSO> _itemList;  //SerializedField는 UnityEditor에서 집어넣기 때문에 new로 인스턴싱 해줄 필요가 없다
 
-    private List<Slot> _inventoryList = new List<Slot>();
+    private Dictionary<int, ItemSO> _itemDictionary = new Dictionary<int, ItemSO>();
 
+    private Dictionary<int, Slot> _slotDictionary = new Dictionary<int, Slot>();
+
+    // private List<Slot> _inventoryList = new List<Slot>();
 
     private void Awake()
     {
-        // getcomponent같은건 Awake를 권장한다
-
-        // _slotPrefab = transform.Find("Slot").gameObject; // 코드몽키가 자주 사용하는 방식
+        foreach (ItemSO so in _itemList)
+        {
+            _itemDictionary[so.code] = so;
+        }
 
         for (int i = 0; i < 8 * 7; ++i)
         {
             Slot slot = Instantiate(_slotPrefab, transform) as Slot;
             slot.slotNumber = i;
-            _inventoryList.Add(slot);
+            // _slotDictionary.Add(i,slot);
+            _slotDictionary[i] = slot;
         }
+
+        // getcomponent같은건 Awake를 권장한다
+
+        // _slotPrefab = transform.Find("Slot").gameObject; // 코드몽키가 자주 사용하는 방식
+
+        // for (int i = 0; i < 8 * 7; ++i)
+        // {
+        //     Slot slot = Instantiate(_slotPrefab, transform) as Slot;
+        //     slot.slotNumber = i;
+        //     _inventoryList.Add(slot);
+        // }
 
         // _slotPrefab.SetActive(false); // 코드몽키가 자주 사용하는 방식
     }
@@ -76,120 +78,84 @@ public class Inventory : MonoBehaviour
         // 서버로부터 데이터를 받아서 파싱한 다음에
         // 그거에 맞춰서 슬롯에 넣는다.
         // StartCoroutine(GetInventory());
+
+        LoadInven();
+    }
+
+
+    public void SaveInven()
+    {
+        // string data = GetSlotDataJson();
+
+        // int id = 1;
+
+        // InventoryUserVO vo = new InventoryUserVO { user_id = id, json = data };
+
+        // string msg = JsonUtility.ToJson(vo);
+
+        // StartCoroutine(SendInventoryData(msg));
+
+
+        // Debug.Log(data);
+
+        InventoryVO saveData = new InventoryVO();
+        saveData.list = new List<SlotVO>();
+
+        foreach (int key in _slotDictionary.Keys)
+        {
+            if (_slotDictionary[key].SlotItem != null)
+            {
+                SlotVO vo = new SlotVO
+                {
+                    code = _slotDictionary[key].SlotItem.code,
+                    slotNumber = _slotDictionary[key].slotNumber
+                };
+                saveData.list.Add(vo);
+            }
+        }
+        saveData.count = saveData.list.Count;
+
+        DataManager.Instance.SaveData(JsonUtility.ToJson(saveData), "/inven", (json, success) =>
+        {
+            Debug.Log(json);
+        });
+        //SaveData를 쏴주면 된다
+    }
+
+    public void LoadInven()
+    {
+        DataManager.Instance.LoadData("/inven", (json, succenss) =>
+        {
+            if(succenss)
+            {
+                ReturnMsg msg = JsonUtility.FromJson<ReturnMsg>(json);
+
+                if(msg.data != "")
+                {
+                    InventoryVO inveoVO = JsonUtility.FromJson<InventoryVO>(msg.data);
+
+                    foreach (SlotVO slot in inveoVO.list)
+                    {
+                        _slotDictionary[slot.slotNumber].RemoveItem(); // 기존 슬롯 초기화
+                        ItemUI item = Instantiate(_itemPrefab);
+
+                        // (이렇게 하지 말자...) -> 내 의견
+                        item.Item = _itemDictionary[slot.code];
+                        _slotDictionary[slot.slotNumber].SetItem(item);
+                        // item.SetData(_slotDictionary[slot.slotNumber].transform, )
+                    }
+                }
+            }
+        });
     }
 
     private void Update()
     {
         if (Input.GetButtonDown("Jump"))
         {
-            string data = GetSlotDataJson();
-
-            int id = 1;
-
-            InventoryUserVO vo = new InventoryUserVO { user_id = id, json = data };
-
-            string msg = JsonUtility.ToJson(vo);
-
-            StartCoroutine(SendInventoryData(msg));
-
-
-            // 이제 이 데이터를 서버로 전송한다. 뭐랑같이?
-            // userID랑 같이
-            // 1번 회원이라고 가정하고 보낸다.
-            // {user_id:1, json:data}
-            // post로 쏘면 된다.
-
-            // 서버는
-            // 받은 거를 Insert 구문을 이용해서 해당 테이블에 넣는다.
-
-
-            // 원래는 서버도 Item의 구조를 다 가지고 있어야하며,
-            // 바뀐 데이터만 다시 전송해서 서버는 바뀐 데이터만 갈아끼는 방식이다.
-
-
-            Debug.Log(data);
+            SaveInven();
         }
 
-        if (Input.GetKeyDown(KeyCode.T))
-        {
-            StartCoroutine(GetInventory());
-        }
     }
 
-    private IEnumerator SendInventoryData(string data)
-    {
-        // UnityWebRequest req = UnityWebRequest.Post("http://localhost:50000/insert/Inventory", data);
-
-        UnityWebRequest req = new UnityWebRequest("http://localhost:50000/insert/Inventory", "POST");
-
-        byte[] dataByte = new System.Text.UTF8Encoding().GetBytes(data);
-        req.uploadHandler = (UploadHandler)new UploadHandlerRaw(dataByte);
-        req.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
-        req.SetRequestHeader("Content-type", "application/json");
-
-        yield return req.SendWebRequest();
-
-        if (req.result == UnityWebRequest.Result.Success)
-        {
-            string result = req.downloadHandler.text;
-
-            InventorySendResultVO resultVO = JsonUtility.FromJson<InventorySendResultVO>(result);
-
-            Debug.Log($"{resultVO.user_id}에 {resultVO.msg}");
-        }
-        else
-        {
-            Debug.LogError("결과 에러");
-        }
-    }
-
-    private IEnumerator GetInventory()
-    {
-        UnityWebRequest req = UnityWebRequest.Get("http://localhost:50000/get/Inventory");
-
-        yield return req.SendWebRequest();
-
-        if (req.result == UnityWebRequest.Result.Success)
-        {
-            string result = req.downloadHandler.text;
-            Debug.Log(result);
-            InventoryGetResultVO resultVO = JsonUtility.FromJson<InventoryGetResultVO>(result);
-
-            Debug.Log(resultVO.msg);
-            Debug.Log(resultVO.json);
-
-            InventoryVO inventoryVO = JsonUtility.FromJson<InventoryVO>(resultVO.json);
-            
-            for (int i = 0; i < inventoryVO.count; ++i)
-            {
-                SlotVO vo = inventoryVO.list[i];
-                Slot s = transform.GetChild(vo.slotNumber).GetComponent<Slot>();
-                ItemUI g = Instantiate(_itemUIPrefab, s.transform);
-                g.item = _codeToItem[vo.code];
-                s.SetItem(g.gameObject);
-                // s._slotItem = new ItemSO { code = vo.code , sprite = _codeToSprite[vo.code]};
-            }
-        }
-    }
-
-    private string GetSlotDataJson()
-    {
-        InventoryVO sendData = new InventoryVO();
-        sendData.list = new List<SlotVO>();
-        foreach (Slot s in _inventoryList)
-        {
-            ItemSO so = s.SlotItem;
-            if (so != null)
-            {
-                SlotVO vo = new SlotVO { code = so.code, isEmpty = false, slotNumber = s.slotNumber };
-                sendData.list.Add(vo);
-            }
-        }
-
-        sendData.count = sendData.list.Count;
-
-        string json = JsonUtility.ToJson(sendData);
-
-        return json;
-    }
 }

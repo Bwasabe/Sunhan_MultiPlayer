@@ -12,8 +12,11 @@ public class Slot : MonoBehaviour, IPointerEnterHandler, IDropHandler, IPointerE
 
     public int slotNumber = 0;
 
-    public ItemUI _slotItem = null;
-    public ItemSO SlotItem => _slotItem != null ? _slotItem.item : null;
+    // (이러면 안됨) -> 내 의견
+    public ItemUI slotItem = null;
+    public ItemSO SlotItem {
+      get =>slotItem != null ? slotItem.Item : null;  
+    } 
 
     private void Awake()
     {
@@ -21,22 +24,19 @@ public class Slot : MonoBehaviour, IPointerEnterHandler, IDropHandler, IPointerE
         _rect = GetComponent<RectTransform>();
     }
 
-    public void SetItem(GameObject target)
-    {
-        _hasItem = true;
-        _slotItem = target.GetComponent<ItemUI>();
-        target.transform.SetParent(transform); //부모를 나로 설정
-        target.GetComponent<RectTransform>().position = _rect.position;
-
-        // 여기는 정말 이렇게 짜면 안된다.
-        Slot prevSlot = _slotItem._prevParent.GetComponent<Slot>();
-        prevSlot?.RemoveItem();
-    }
+    
 
     public void RemoveItem()
     {
         _hasItem = false;
-        _slotItem = null;
+        slotItem = null;
+    }
+
+    public void SetItem(ItemUI item)
+    {
+        slotItem = item;
+        _hasItem = true;
+        slotItem.SetData(transform, _rect.position);
     }
 
     public void OnDrop(PointerEventData eventData)
@@ -45,7 +45,15 @@ public class Slot : MonoBehaviour, IPointerEnterHandler, IDropHandler, IPointerE
 
         if (eventData.pointerDrag != null && _hasItem == false) //드래그 중인 아이템이 있었다면
         {
-            SetItem(eventData.pointerDrag);
+            GameObject target = eventData.pointerDrag;
+
+            slotItem = target.GetComponent<ItemUI>();
+
+            if(slotItem == null)return;
+
+            slotItem.SetData(transform, _rect.position);
+
+            _hasItem = true;
         }
     }
 

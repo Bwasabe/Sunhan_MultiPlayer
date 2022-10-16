@@ -13,4 +13,9 @@ MonoBehaviour:
   m_Name: ShrekTae
   m_EditorClassIdentifier: 
   code: 1
+  _assetSprite:
+    m_AssetGUID: bae820192cf242f47b34c0c35e45ef93
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
   sprite: {fileID: 21300000, guid: bae820192cf242f47b34c0c35e45ef93, type: 3}
