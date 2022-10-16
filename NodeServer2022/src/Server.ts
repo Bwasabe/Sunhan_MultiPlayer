@@ -5,7 +5,7 @@ import Express, {Application, Request, Response} from 'express';
 import path from 'path';
 import fs from 'fs';
 
-import { Pool, ScoreVO } from './DB';
+import { InventoryVO, Pool, ScoreVO } from './DB';
 import { FieldPacket, ResultSetHeader } from 'mysql2';
 
 // import GGM1 from './DB';
@@ -41,7 +41,14 @@ ResultSetHeader {
     warningStatus: 0
   },
 */
+app.post("/insert/Inventory", async (req: Request, res: Response) => {
+    console.log(req.body);
+    const { user_id, json } = req.body;
 
+    let [result, info] : [ResultSetHeader, FieldPacket[]] = await Pool.query(`INSERT INTO Inventories (user_id, json) VALUES (?,?)`, [user_id, json]);
+
+    res.json({ msg: "기록 완료!", user_id: result.insertId });
+});
 app.post("/insert", async (req: Request, res: Response) => {
     const { score, username } = req.body;
 
@@ -55,6 +62,18 @@ app.post("/insert", async (req: Request, res: Response) => {
     // 기록된 id도 함께 리턴하게 해서 유니티에서 해당 ID(Auto_IncreamentID)를 출력하게 하기
     res.json({ msg: "성공적으로 기록 완료" , incrementID : result.insertId});
 });
+
+app.get("/get/Inventory", async (req: Request, res: Response) => {
+    
+    const sql = `SELECT * FROM Inventories ORDER BY id ASC`;
+    let [rows, fieldInfos] : [InventoryVO[], FieldPacket[]] = await Pool.query(sql);
+    
+    console.log(rows);
+    // res.send(rows);
+    res.json({ msg: "인벤토리정보 보냄", json: rows[0] });
+});
+
+
 
 app.get("/record", async (req: Request, res: Response) => {
     const sql = `SELECT * FROM scores ORDER BY score DESC LIMIT 0, 5`;

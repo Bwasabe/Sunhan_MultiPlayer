@@ -12,7 +12,7 @@ public class Slot : MonoBehaviour, IPointerEnterHandler, IDropHandler, IPointerE
 
     public int slotNumber = 0;
 
-    private ItemUI _slotItem = null;
+    public ItemUI _slotItem = null;
     public ItemSO SlotItem => _slotItem != null ? _slotItem.item : null;
 
     private void Awake()

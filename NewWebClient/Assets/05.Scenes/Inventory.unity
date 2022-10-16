@@ -633,6 +633,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _slotPrefab: {fileID: 2897765483864373118, guid: 61cabae1e70b9f24bac3266d376d3b30, type: 3}
+  _codeToItem:
+  - {fileID: 11400000, guid: fd0a760d7e433c44fba109cf17a9f2b9, type: 2}
+  - {fileID: 11400000, guid: 635f19569040ff441ada1a1ee351acf1, type: 2}
+  _itemUIPrefab: {fileID: 609979234}
 --- !u!1 &1675198073
 GameObject:
   m_ObjectHideFlags: 0
