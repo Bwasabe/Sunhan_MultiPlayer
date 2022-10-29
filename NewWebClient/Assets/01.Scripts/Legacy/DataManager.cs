@@ -39,7 +39,7 @@ public class DataManager : MonoBehaviour
             form.AddField("user_id", user_id);
             form.AddField("json", json);
         }
-        
+
 
         UnityWebRequest req = UnityWebRequest.Post(URL + uri, form);
 
@@ -63,14 +63,21 @@ public class DataManager : MonoBehaviour
     private IEnumerator LoadCoroutine(string uri, Action<string, bool> CallBack)
     {
         UnityWebRequest req = UnityWebRequest.Get($"{URL}{uri}");
+        if (PlayerPrefs.HasKey("token"))
+        {
+            string token = PlayerPrefs.GetString("token");
+            req.SetRequestHeader("Authorization", token);
+        }
+
         yield return req.SendWebRequest();
 
         if (req.result == UnityWebRequest.Result.Success)
         {
-            CallBack(req.downloadHandler.text, true);
+                CallBack(req.downloadHandler.text, true);
         }
         else
         {
+            Debug.Log(req.responseCode);
             CallBack(req.error, false);
         }
     }

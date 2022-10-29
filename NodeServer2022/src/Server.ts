@@ -1,6 +1,6 @@
 import http from 'http'; // 이렇게 쓰면 ts가 알아서 require로 변경해준다.
 // const http = require('http');
-import Express, {Application, Request, Response} from 'express';
+import Express, {Application, NextFunction, request, Request, Response} from 'express';
 // const Express = require('express');
 import path from 'path';
 import fs from 'fs';
@@ -20,33 +20,81 @@ const app: Express.Application = Express();
 app.use(Express.json()); // 들어오는 post 데이터를 json으로 변경해서 body에 박아주는 역할
 app.use(Express.urlencoded({ extended: true })); // 한글때문에 적어줌
 
+app.use((req:Request, res:Response, next:NextFunction) => {
+    console.log(req.url);
+    next(); // 어떤 요청이든 그냥 보내주는데
+});
+
+app.use(Express.static('public'));   // 실제로는 FTP같은 것들을 이용하여 원격으로 서버에 올려준다
+
+
+const AuthMiddleware = (req: Request, res: Response, next: NextFunction) => {
+    const token: string = req.header("Authorization") as string;
+    
+    try {
+        let payload = JWT.verify(token, Key.secret);
+        // console.log(payload);
+        // res.json({ msg: "받았음" });
+        next();
+    } catch (e) {
+        // HTTP response code 401을 리턴
+        res.status(401).json({ msg: "권한 없음" });
+        
+    }
+    
+};
+
 
 app.get("/", (req : Request, res : Response) => {
     // res.json(data);
 });
 
 app.post("/login", async (req: Request, res: Response) => {
-    const { account, pass }: { account: string, pass: string } = req.body;
+    const { account, pass, deviceID }: { account: string, pass: string, deviceID:string } = req.body;
     
     console.log(account, pass);
     // TODO : 여기서 로그인처리를 어케어케 하고 나서
+    let sql = `SELECT * FROM users WHERE account = ? AND pass = PASSWORD(?)`;
+    let [row, fieldInfos]: [UserVO[], FieldPacket[]] = await Pool.query(sql, [account, pass]);
 
     // TODO: 로그인을 성공시에는 토큰 발행, 실패시에는 토큰 미발행(실패했다고 보내줌)
 
-
-    let token:string = JWT.sign({
-        //Payload
-        account: account, 
-        name:"최선한"
-    }, Key.secret, {
-        algorithm: "HS256",
-        expiresIn: "30 days"
-    });
-    
-    res.json({ msg: "로그인 성공", token: token }); // 키와 변수명이 똑같을 경우 생략 가능 account,
+    if (row.length == 1) {
+        let token: string = JWT.sign({
+            //Payload
+            account: account,
+            name: "최선한",
+            deviceID: deviceID
+        }, Key.secret, {
+            algorithm: "HS256",
+            expiresIn: "30 days"
+        });
+        
+        res.json({ success: true, msg: "로그인 성공", token: token }); // 키와 변수명이 똑같을 경우 생략 가능 account,
+    }
+    else {
+        res.json({ success: false, msg: "로그인 성공", token: "" }); // 키와 변수명이 똑같을 경우 생략 가능 account,
+    }
 
 });
 
+app.get("/check", AuthMiddleware, async (req: Request, res: Response) => {
+    
+});
+
+app.post("/insert",AuthMiddleware, async (req: Request, res: Response) => {
+    const { score, username } = req.body;
+
+    console.log(req.body);
+    
+    // 싱글스레드 언어
+    let [result, info] : [ResultSetHeader, FieldPacket[]] = await Pool.query(`INSERT INTO scores (score,username, time) VALUES (?,?, NOW())`, [score, username]);
+    
+    // console.log(result);
+
+    // 기록된 id도 함께 리턴하게 해서 유니티에서 해당 ID(Auto_IncreamentID)를 출력하게 하기
+    res.json({ msg: "성공적으로 기록 완료" , incrementID : result.insertId});
+});
 
 /*
 ResultSetHeader {
@@ -126,19 +174,7 @@ app.get("/inven", async (req: Request, res: Response) => {
     }
 });
 
-app.post("/insert", async (req: Request, res: Response) => {
-    const { score, username } = req.body;
 
-    console.log(req.body);
-    
-    // 싱글스레드 언어
-    let [result, info] : [ResultSetHeader, FieldPacket[]] = await Pool.query(`INSERT INTO scores (score,username, time) VALUES (?,?, NOW())`, [score, username]);
-    
-    // console.log(result);
-
-    // 기록된 id도 함께 리턴하게 해서 유니티에서 해당 ID(Auto_IncreamentID)를 출력하게 하기
-    res.json({ msg: "성공적으로 기록 완료" , incrementID : result.insertId});
-});
 
 // app.get("/get/Inventory", async (req: Request, res: Response) => {
     

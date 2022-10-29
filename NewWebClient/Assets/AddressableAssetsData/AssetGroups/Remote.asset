@@ -20,11 +20,13 @@ MonoBehaviour:
   - m_GUID: a8554f311ae868749b870d253c1d3b4e
     m_Address: GreedTae
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - Texture
   - m_GUID: bae820192cf242f47b34c0c35e45ef93
     m_Address: syuyoung
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - Texture
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 434fcb04ba665664383453c88470b778, type: 2}
   m_SchemaSet:
