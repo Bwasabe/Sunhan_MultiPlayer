@@ -1,0 +1,24 @@
+syntax= "proto3" //프로토버퍼의 구문의 버전
+package tankio; // 사용하는 패키지의 이름
+
+option csharp_namespace = "GGM.Proto.Tank"; // 실제 c#에 들어가는 네임스페이스 이름
+
+enum MSGID
+{
+    CMVOE = 0;      // 클라가 움직였다, ;인 이유는 그냥 문서의 규칙? 같은 느낌이다 문법이 아니라 가능한거
+    SMOVE = 1;      // 서버에서 움직였다
+}
+
+message CMove // Cmove하고 CMOVE하고 똑같으면 큰일남
+{
+    Int32 playerId = 1;     
+    float x = 2;        // 모든 애들은 각각 고유의 ID가 있어야한다
+    float y = 3;
+}
+
+message SMove
+{
+    int32 playerId = 1;
+    float x = 2;
+    float y = 3;
+}

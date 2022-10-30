@@ -82,7 +82,7 @@ app.get("/check", AuthMiddleware, async (req: Request, res: Response) => {
     
 });
 
-app.post("/insert",AuthMiddleware, async (req: Request, res: Response) => {
+app.post("/insert", AuthMiddleware, async (req: Request, res: Response) => {
     const { score, username } = req.body;
 
     console.log(req.body);
